@@ -1,9 +1,35 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
-  <PropertyGroup>
-    <TargetFramework>net8.0</TargetFramework>
-    <ImplicitUsings>enable</ImplicitUsings>
-    <Nullable>enable</Nullable>
-  </PropertyGroup>
+	<PropertyGroup>
+		<TargetFrameworks>net462;net5.0-windows7.0;net6.0-windows7.0;net8.0-windows7.0</TargetFrameworks>
+		<ImplicitUsings>enable</ImplicitUsings>
+		<LangVersion>11.0</LangVersion>
+		<Nullable>enable</Nullable>
+		<Platforms>AnyCPU;x64;x86</Platforms>
+		<AssemblyVersion>1.0.0</AssemblyVersion>
+	</PropertyGroup>
 
+	<ItemGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|x86'">
+		<None Include="..\x86\Debug\TqkLibrary.AudioPlayer.FFmpegAudioReader.Native.dll" Link="runtimes\win-x86\native\TqkLibrary.AudioPlayer.FFmpegAudioReader.Native.dll">
+			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
+		</None>
+		<None Include="..\x86\Debug\TqkLibrary.AudioPlayer.FFmpegAudioReader.Native.pdb" Link="runtimes\win-x86\native\TqkLibrary.AudioPlayer.FFmpegAudioReader.Native.pdb">
+			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
+		</None>
+	</ItemGroup>
+
+	<ItemGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|x64'">
+		<None Include="..\x64\Debug\TqkLibrary.AudioPlayer.FFmpegAudioReader.Native.dll" Link="runtimes\win-x64\native\TqkLibrary.AudioPlayer.FFmpegAudioReader.Native.dll">
+			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
+		</None>
+		<None Include="..\x64\Debug\TqkLibrary.AudioPlayer.FFmpegAudioReader.Native.pdb" Link="runtimes\win-x64\native\TqkLibrary.AudioPlayer.FFmpegAudioReader.Native.pdb">
+			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
+		</None>
+	</ItemGroup>
+
+	<ItemGroup>
+		<PackageReference Include="TqkLibrary.FFmpeg.GplShared" Version="5.1.2" />
+	</ItemGroup>
+	
+	
 </Project>
