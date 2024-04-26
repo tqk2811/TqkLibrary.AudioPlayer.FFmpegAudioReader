@@ -12,10 +12,12 @@ inline int CheckErr(int err) {
 	if (err != 0)
 	{
 		SetLastError(err);
+#if _DEBUG
 		char buffer[1024];
 		av_strerror(err, buffer, 1024);
 		const char* msg = &buffer[0];
 		printf(msg);
+#endif
 	}
 	return err;
 }
