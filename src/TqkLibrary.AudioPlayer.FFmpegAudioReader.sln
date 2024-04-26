@@ -10,7 +10,12 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TqkLibrary.AudioPlayer.FFmp
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "TqkLibrary.AudioPlayer.FFmpegAudioReader.Native", "TqkLibrary.AudioPlayer.FFmpegAudioReader.Native\TqkLibrary.AudioPlayer.FFmpegAudioReader.Native.vcxproj", "{4F6674D0-B05A-4494-8477-FBBF2174ADC0}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ConsoleTest", "ConsoleTest\ConsoleTest.csproj", "{49D42D0E-D19A-4876-86D7-123DA1C11955}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ConsoleTest", "ConsoleTest\ConsoleTest.csproj", "{49D42D0E-D19A-4876-86D7-123DA1C11955}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{755D2147-5397-42C4-A353-D31EDE83A1FA}"
+	ProjectSection(SolutionItems) = preProject
+		Build.ps1 = Build.ps1
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
