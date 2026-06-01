@@ -1,12 +1,13 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
+	<Import Project="..\ProjectBuildProperties.targets" />
+
 	<PropertyGroup>
 		<TargetFrameworks>net462;net5.0-windows7.0;net6.0-windows7.0;net8.0-windows7.0</TargetFrameworks>
 		<ImplicitUsings>enable</ImplicitUsings>
 		<LangVersion>11.0</LangVersion>
 		<Nullable>enable</Nullable>
 		<Platforms>AnyCPU;x64;x86</Platforms>
-		<AssemblyVersion>1.0.1</AssemblyVersion>
 	</PropertyGroup>
 
 	<ItemGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|x86'">

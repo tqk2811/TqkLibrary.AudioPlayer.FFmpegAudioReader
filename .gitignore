@@ -361,3 +361,6 @@ MigrationBackup/
 
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
+
+# Generated native version header (Build.ps1 writes the real version)
+version.generated.h
