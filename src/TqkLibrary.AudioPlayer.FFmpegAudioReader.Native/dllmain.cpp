@@ -1,5 +1,7 @@
-// dllmain.cpp : Defines the entry point for the DLL application.
-#include "pch.h"
+// dllmain.cpp : Defines the entry point for the DLL application (Windows only).
+#ifdef _WIN32
+#define WIN32_LEAN_AND_MEAN
+#include <windows.h>
 
 BOOL APIENTRY DllMain( HMODULE hModule,
                        DWORD  ul_reason_for_call,
@@ -16,4 +18,4 @@ BOOL APIENTRY DllMain( HMODULE hModule,
     }
     return TRUE;
 }
-
+#endif // _WIN32

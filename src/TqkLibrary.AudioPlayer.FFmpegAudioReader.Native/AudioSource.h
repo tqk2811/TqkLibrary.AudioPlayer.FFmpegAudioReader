@@ -1,14 +1,15 @@
 #ifndef _H_AudioSource_H_
 #define _H_AudioSource_H_
+#include "libav.h"
 class AudioSource
 {
 public:
 	AudioSource();
 	~AudioSource();
 
-	BOOL Init(LPSTR filePath);
+	bool Init(const char* filePath);
 
-	BOOL ReadFrame(AVFrame* pframe);
+	bool ReadFrame(AVFrame* pframe);
 
 private:
 	AVFormatContext* pInputFormatContext{ nullptr };

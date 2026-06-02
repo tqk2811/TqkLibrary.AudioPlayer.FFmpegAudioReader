@@ -9,49 +9,53 @@ AudioSource::AudioSource() {
 AudioSource::~AudioSource() {
 	if (this->pInputFormatContext)
 	{
+		// avformat_close_input frees the context and sets the pointer to null.
 		avformat_close_input(&pInputFormatContext);
-		avformat_free_context(pInputFormatContext);
 		pInputFormatContext = nullptr;
 	}
 	if (this->pCodecContext)
 	{
-		avcodec_close(pCodecContext);
+		// avcodec_free_context closes and frees the context (avcodec_close was
+		// removed in FFmpeg 8.0).
 		avcodec_free_context(&pCodecContext);
 		pCodecContext = nullptr;
 	}
 }
 
-BOOL AudioSource::Init(LPSTR filePath) {
-	int err = avformat_open_input(&pInputFormatContext, filePath, nullptr, nullptr);
+bool AudioSource::Init(const char* filePath) {
+	int err = CheckErr(avformat_open_input(&pInputFormatContext, filePath, nullptr, nullptr));
 	if (err)
-		return FALSE;
+		return false;
 
-	err = avformat_find_stream_info(pInputFormatContext, nullptr);
+	err = CheckErr(avformat_find_stream_info(pInputFormatContext, nullptr));
 	if (err)
-		return FALSE;
+		return false;
 
-	for (int i = 0; i < pInputFormatContext->nb_streams; i++)
+	for (unsigned int i = 0; i < pInputFormatContext->nb_streams; i++)
 	{
 		if (audioIndex == -1 && pInputFormatContext->streams[i]->codecpar->codec_type == AVMediaType::AVMEDIA_TYPE_AUDIO)
 		{
 			audioIndex = i;
 		}
 	}
+	if (audioIndex == -1)
+		return false;
+
 	input_audio_stream = pInputFormatContext->streams[audioIndex];
 	const AVCodec* audio_codec = avcodec_find_decoder(input_audio_stream->codecpar->codec_id);
 	pCodecContext = avcodec_alloc_context3(audio_codec);
 	this->pCodecContext->flags |= AV_CODEC_FLAG_LOW_DELAY;
 	this->pCodecContext->ch_layout.nb_channels = 2;
 	this->pCodecContext->sample_rate = 44100;
-	err = avcodec_open2(this->pCodecContext, audio_codec, nullptr);
+	err = CheckErr(avcodec_open2(this->pCodecContext, audio_codec, nullptr));
 	if (err)
-		return FALSE;
+		return false;
 
 	return err == 0;
 }
-BOOL AudioSource::ReadFrame(AVFrame* pframe) {
+bool AudioSource::ReadFrame(AVFrame* pframe) {
 	if (!pframe)
-		return FALSE;
+		return false;
 
 	av_frame_unref(pframe);
 
@@ -60,7 +64,7 @@ BOOL AudioSource::ReadFrame(AVFrame* pframe) {
 	{
 		int err = av_read_frame(pInputFormatContext, &pkt);
 		if (err == AVERROR_EOF)
-			return FALSE;
+			return false;
 
 		//if (pkt.pts == AV_NOPTS_VALUE)
 		//	continue;

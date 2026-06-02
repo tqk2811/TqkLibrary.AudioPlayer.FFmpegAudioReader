@@ -1,8 +1,9 @@
 #include "pch.h"
+#include "AudioSource.h"
 #include "Exports.h"
 
-AudioSource* AudioSource_Alloc(LPSTR filePath) {
-	SetLastError(0);
+AudioSource* AudioSource_Alloc(const char* filePath) {
+	g_lastAvError = 0;
 	AudioSource* pAudioSource = new AudioSource();
 	if (pAudioSource->Init(filePath))
 	{
@@ -14,7 +15,7 @@ AudioSource* AudioSource_Alloc(LPSTR filePath) {
 		return nullptr;
 	}
 }
-VOID AudioSource_Free(AudioSource** ppAudioSource) {
+void AudioSource_Free(AudioSource** ppAudioSource) {
 	if (ppAudioSource)
 	{
 		AudioSource* pAudioSource = *ppAudioSource;
@@ -25,9 +26,19 @@ VOID AudioSource_Free(AudioSource** ppAudioSource) {
 		}
 	}
 }
-BOOL AudioSource_ReadFrame(AudioSource* pAudioSource, AVFrame* pframe) {
-	SetLastError(0);
+int AudioSource_ReadFrame(AudioSource* pAudioSource, AVFrame* pframe) {
+	g_lastAvError = 0;
 	if (!pAudioSource)
-		return FALSE;
-	return pAudioSource->ReadFrame(pframe);
+		return 0;
+	return pAudioSource->ReadFrame(pframe) ? 1 : 0;
+}
+AVFrame* AudioSource_FrameAlloc() {
+	return av_frame_alloc();
+}
+void AudioSource_FrameFree(AVFrame** ppFrame) {
+	if (ppFrame && *ppFrame)
+		av_frame_free(ppFrame);
+}
+int AudioSource_GetLastError() {
+	return g_lastAvError;
 }
