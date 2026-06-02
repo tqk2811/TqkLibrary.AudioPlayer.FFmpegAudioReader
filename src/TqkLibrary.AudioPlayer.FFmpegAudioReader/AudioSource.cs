@@ -1,9 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Reflection;
+using System;
+using System.IO;
 using System.Text;
-using System.Threading.Tasks;
 
 namespace TqkLibrary.AudioPlayer.FFmpegAudioReader
 {
@@ -17,9 +14,12 @@ namespace TqkLibrary.AudioPlayer.FFmpegAudioReader
                 throw new FileNotFoundException(filePath);
             _filePath = filePath;
 
-            _pointer = NativeWrapper.AudioSource_Alloc(filePath);
+            // Pass the path as a NUL-terminated UTF-8 buffer so it works the same
+            // way on Windows and Linux (FFmpeg expects UTF-8 paths).
+            byte[] utf8 = Encoding.UTF8.GetBytes(filePath + "\0");
+            _pointer = NativeWrapper.AudioSource_Alloc(utf8);
             if (_pointer == IntPtr.Zero)
-                throw new ApplicationException($"Create and load {nameof(AudioSource)} failed (last error : {NativeWrapper.GetLastError()})");
+                throw new ApplicationException($"Create and load {nameof(AudioSource)} failed (last error : {NativeWrapper.AudioSource_GetLastError()})");
         }
         ~AudioSource()
         {
@@ -40,7 +40,7 @@ namespace TqkLibrary.AudioPlayer.FFmpegAudioReader
 
         public bool ReadFrame(AVFrame aVFrame)
         {
-            return NativeWrapper.AudioSource_ReadFrame(_pointer, aVFrame.Handle);
+            return NativeWrapper.AudioSource_ReadFrame(_pointer, aVFrame.Handle) != 0;
         }
 
         public class AVFrame : IDisposable
@@ -49,7 +49,7 @@ namespace TqkLibrary.AudioPlayer.FFmpegAudioReader
             public IntPtr Handle { get { return _handle; } }
             public AVFrame()
             {
-                _handle = NativeWrapper.av_frame_alloc();
+                _handle = NativeWrapper.AudioSource_FrameAlloc();
             }
             ~AVFrame()
             {
@@ -64,7 +64,7 @@ namespace TqkLibrary.AudioPlayer.FFmpegAudioReader
             {
                 if (_handle != IntPtr.Zero)
                 {
-                    NativeWrapper.av_frame_free(ref _handle);
+                    NativeWrapper.AudioSource_FrameFree(ref _handle);
                 }
             }
         }

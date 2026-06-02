@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+	<!-- The runtimes/<rid>/native convention is only honoured automatically by
+	     SDK-style / .NET (Core) projects. For .NET Framework consumers we copy the
+	     native wrapper to the output ourselves (the FFmpeg.Native.* packages do the
+	     same for their own libraries). Only the Windows RIDs matter for net4x. -->
+	<Target Name="CopyTqkAudioReaderNativeWin" AfterTargets="Build"
+	        Condition="'$(TargetFrameworkIdentifier)' == '.NETFramework'">
+		<ItemGroup>
+			<_TqkAudioReaderNativeX86 Include="$(MSBuildThisFileDirectory)../runtimes/win-x86/native/*.*" />
+			<_TqkAudioReaderNativeX64 Include="$(MSBuildThisFileDirectory)../runtimes/win-x64/native/*.*" />
+			<_TqkAudioReaderNativeArm64 Include="$(MSBuildThisFileDirectory)../runtimes/win-arm64/native/*.*" />
+		</ItemGroup>
+		<Copy SourceFiles="@(_TqkAudioReaderNativeX86)" DestinationFolder="$(OutDir)runtimes\win-x86\native\" SkipUnchangedFiles="true" />
+		<Copy SourceFiles="@(_TqkAudioReaderNativeX64)" DestinationFolder="$(OutDir)runtimes\win-x64\native\" SkipUnchangedFiles="true" />
+		<Copy SourceFiles="@(_TqkAudioReaderNativeArm64)" DestinationFolder="$(OutDir)runtimes\win-arm64\native\" SkipUnchangedFiles="true" />
+	</Target>
+</Project>
