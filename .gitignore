@@ -362,5 +362,10 @@ MigrationBackup/
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
 
-# Generated native version header (Build.ps1 writes the real version)
+# Generated native version header (CMake configure writes the real version)
 version.generated.h
+
+# CMake-built native wrapper collected per-RID for packaging
+native-artifacts/
+# Local CMake build trees
+native-build/

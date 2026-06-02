@@ -2,12 +2,29 @@ $ErrorActionPreference = 'Stop'
 $root = $PSScriptRoot
 Set-Location $root
 
-$vswhere = Join-Path ${env:ProgramFiles(x86)} 'Microsoft Visual Studio\Installer\vswhere.exe'
-if (-not (Test-Path $vswhere)) { throw "vswhere not found at $vswhere" }
-$msbuild = & $vswhere -latest -products * -requires Microsoft.Component.MSBuild -find 'MSBuild\**\Bin\MSBuild.exe' | Select-Object -First 1
-if ([string]::IsNullOrWhiteSpace($msbuild)) { throw "MSBuild not found via vswhere (install C++ workload)" }
-Write-Host "MSBuild: $msbuild"
+# ---------------------------------------------------------------------------
+# FFmpeg native package versions (one NuGet package per RID).
+# ---------------------------------------------------------------------------
+$ffmpegVersions = @{
+    'win-x64'   = '8.0.1.48'
+    'win-x86'   = '8.0.1.48'
+    'win-arm64' = '8.0.1.48'
+}
+$nugetCache = Join-Path $env:USERPROFILE '.nuget\packages'
 
+# ---- Locate CMake (prefer the one bundled with Visual Studio) -------------
+$vswhere = Join-Path ${env:ProgramFiles(x86)} 'Microsoft Visual Studio\Installer\vswhere.exe'
+$cmake = $null
+if (Test-Path $vswhere) {
+    $vs = & $vswhere -latest -products * -property installationPath | Select-Object -First 1
+    $candidate = Join-Path $vs 'Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\bin\cmake.exe'
+    if (Test-Path $candidate) { $cmake = $candidate }
+}
+if (-not $cmake) { $cmake = (Get-Command cmake -ErrorAction SilentlyContinue).Source }
+if (-not $cmake) { throw "cmake not found (install Visual Studio C++ CMake tools or cmake on PATH)" }
+Write-Host "CMake: $cmake"
+
+# ---- Version via GitVersion ----------------------------------------------
 if (-not (Get-Command dotnet-gitversion -ErrorAction SilentlyContinue)) {
     dotnet tool install -g GitVersion.Tool | Out-Host
     $env:PATH = "$env:PATH;$env:USERPROFILE\.dotnet\tools"
@@ -16,32 +33,58 @@ $gv = dotnet-gitversion /output json | ConvertFrom-Json
 $verMajor = [int]$gv.Major; $verMinor = [int]$gv.Minor; $verBuild = [int]$gv.CommitsSinceVersionSource
 Write-Host "Version: $verMajor.$verMinor.$verBuild"
 
-$header = @'
-#pragma once
-#define VER_FILE_MAJOR    {0}
-#define VER_FILE_MINOR    {1}
-#define VER_FILE_BUILD    {2}
-#define VER_FILE_REVISION 0
-#define VER_FILEVERSION_STR    "{0}.{1}.{2}.0"
-#define VER_PRODUCTVERSION_STR "{0}.{1}.{2}"
-'@ -f $verMajor, $verMinor, $verBuild
-[System.IO.File]::WriteAllText("$root\TqkLibrary.AudioPlayer.FFmpegAudioReader.Native\version.generated.h", $header + "`r`n", (New-Object System.Text.UTF8Encoding($false)))
+$libProj = "$root\TqkLibrary.AudioPlayer.FFmpegAudioReader\TqkLibrary.AudioPlayer.FFmpegAudioReader.csproj"
+$nativeSrc = "$root\TqkLibrary.AudioPlayer.FFmpegAudioReader.Native"
+$artifacts = "$root\native-artifacts"
 
-Remove-Item -Recurse -Force .\x64\Release\** -ErrorAction SilentlyContinue
-Remove-Item -Recurse -Force .\x86\Release\** -ErrorAction SilentlyContinue
-Remove-Item -Recurse -Force .\TqkLibrary.AudioPlayer.FFmpegAudioReader\bin\Release\** -ErrorAction SilentlyContinue
+# Restore so the FFmpeg native packages are present in the NuGet cache.
+dotnet restore $libProj | Out-Host
+if ($LASTEXITCODE -ne 0) { throw "restore failed" }
 
-$nativeProj = "$root\TqkLibrary.AudioPlayer.FFmpegAudioReader.Native\TqkLibrary.AudioPlayer.FFmpegAudioReader.Native.vcxproj"
-foreach ($platform in @('x64','Win32')) {
-    Write-Host "Building native $platform ..."
-    & $msbuild $nativeProj /t:Rebuild /p:Configuration=Release /p:Platform=$platform /p:SolutionDir="$root\" /v:minimal /nologo
-    if ($LASTEXITCODE -ne 0) { throw "Native build failed ($platform)" }
+Remove-Item -Recurse -Force $artifacts -ErrorAction SilentlyContinue
+
+# vsArch by RID. ARM64 is best-effort (requires the ARM64 build tools component).
+$archMap = @{ 'win-x64' = 'x64'; 'win-x86' = 'Win32'; 'win-arm64' = 'ARM64' }
+
+function Build-NativeWin([string]$rid) {
+    $ver = $ffmpegVersions[$rid]
+    $pkg = Join-Path $nugetCache "tqklibrary.ffmpeg.native.$($rid.Replace('-','.'))\$ver"
+    if (-not (Test-Path $pkg)) { throw "Package not restored: $pkg" }
+    $arch = $rid.Substring(4)   # x64 / x86 / arm64
+    $vsArch = $archMap[$rid]
+    $bld = "$root\native-build\$rid"
+    Remove-Item -Recurse -Force $bld -ErrorAction SilentlyContinue
+
+    & $cmake -A $vsArch `
+        -DFFMPEG_INCLUDE_DIR="$pkg\build\native\include" `
+        -DFFMPEG_LIB_DIR="$pkg\build\native\win\$arch\lib" `
+        -DVER_FILE_MAJOR=$verMajor -DVER_FILE_MINOR=$verMinor -DVER_FILE_BUILD=$verBuild `
+        -S $nativeSrc -B $bld
+    if ($LASTEXITCODE -ne 0) { throw "cmake configure failed ($rid)" }
+    & $cmake --build $bld --config Release
+    if ($LASTEXITCODE -ne 0) { throw "cmake build failed ($rid)" }
+
+    $dstDir = "$artifacts\runtimes\$rid\native"
+    New-Item -ItemType Directory -Force $dstDir | Out-Null
+    Get-ChildItem -Recurse $bld -Include '*.dll', '*.pdb' |
+        Where-Object { $_.Name -like 'TqkLibrary.AudioPlayer.FFmpegAudioReader.Native.*' } |
+        ForEach-Object { Copy-Item $_.FullName $dstDir -Force }
+    Write-Host "Native built -> $dstDir"
 }
 
-dotnet pack .\TqkLibrary.AudioPlayer.FFmpegAudioReader\TqkLibrary.AudioPlayer.FFmpegAudioReader.csproj -c Release -o .\TqkLibrary.AudioPlayer.FFmpegAudioReader\bin\Release
+# x64 + x86 are always built locally; arm64 is best-effort.
+Build-NativeWin 'win-x64'
+Build-NativeWin 'win-x86'
+try { Build-NativeWin 'win-arm64' }
+catch { Write-Warning "win-arm64 native skipped: $($_.Exception.Message). Linux + full matrix are produced by CI." }
+
+# ---- Pack the managed library --------------------------------------------
+Remove-Item -Recurse -Force "$root\TqkLibrary.AudioPlayer.FFmpegAudioReader\bin\Release" -ErrorAction SilentlyContinue
+dotnet pack $libProj -c Release -o "$root\TqkLibrary.AudioPlayer.FFmpegAudioReader\bin\Release"
 if ($LASTEXITCODE -ne 0) { throw "dotnet pack failed" }
-$nupkg = Get-ChildItem .\TqkLibrary.AudioPlayer.FFmpegAudioReader\bin\Release\*.nupkg | Select-Object -First 1
+$nupkg = Get-ChildItem "$root\TqkLibrary.AudioPlayer.FFmpegAudioReader\bin\Release\*.nupkg" | Select-Object -First 1
 Write-Host "Packed: $($nupkg.Name)"
+Write-Warning "This local package only contains the RIDs built on this machine. The published cross-platform package (incl. Linux x64/arm64) is produced by the GitHub Actions workflow."
 
 if (![string]::IsNullOrWhiteSpace($env:localNuget)) { Copy-Item $nupkg.FullName -Destination $env:localNuget -Force }
 if (![string]::IsNullOrWhiteSpace($env:nugetKey)) {
