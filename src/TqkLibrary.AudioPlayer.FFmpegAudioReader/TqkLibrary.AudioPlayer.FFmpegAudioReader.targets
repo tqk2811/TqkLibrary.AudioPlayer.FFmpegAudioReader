@@ -2,7 +2,7 @@
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
 	<!-- The runtimes/<rid>/native convention is only honoured automatically by
 	     SDK-style / .NET (Core) projects. For .NET Framework consumers we copy the
-	     native wrapper to the output ourselves (the FFmpeg.Gpl2.Native.* packages do the
+	     native wrapper to the output ourselves (the FFmpeg.Lgpl2.Native.* packages do the
 	     same for their own libraries). Only the Windows RIDs matter for net4x. -->
 	<Target Name="CopyTqkAudioReaderNativeWin" AfterTargets="Build"
 	        Condition="'$(TargetFrameworkIdentifier)' == '.NETFramework'">

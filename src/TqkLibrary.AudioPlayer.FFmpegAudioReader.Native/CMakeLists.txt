@@ -10,7 +10,7 @@ set(TARGET_NAME "TqkLibrary.AudioPlayer.FFmpegAudioReader.Native")
 
 # ---------------------------------------------------------------------------
 # FFmpeg inputs.
-# These come from the TqkLibrary.FFmpeg.Gpl2.Native.<RID> NuGet packages and are
+# These come from the TqkLibrary.FFmpeg.Lgpl2.Native.<RID> NuGet packages and are
 # supplied by the build script / CI:
 #   FFMPEG_INCLUDE_DIR  -> <pkg>/build/native/include            (all platforms)
 #   FFMPEG_LIB_DIR      -> <pkg>/build/native/win/<arch>/lib     (Windows only, import libs)

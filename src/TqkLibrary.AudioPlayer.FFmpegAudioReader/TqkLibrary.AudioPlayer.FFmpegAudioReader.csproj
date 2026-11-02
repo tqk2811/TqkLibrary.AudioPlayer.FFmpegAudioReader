@@ -15,11 +15,11 @@
 	<!-- FFmpeg 9.0 native libraries, one package per RID. Their runtimes/<rid>/native
 	     assets flow transitively to the consuming app, which loads only its own RID. -->
 	<ItemGroup>
-		<PackageReference Include="TqkLibrary.FFmpeg.Gpl2.Native.Win.x86" Version="9.0.2" />
-		<PackageReference Include="TqkLibrary.FFmpeg.Gpl2.Native.Win.x64" Version="9.0.2" />
-		<PackageReference Include="TqkLibrary.FFmpeg.Gpl2.Native.Win.arm64" Version="9.0.2" />
-		<PackageReference Include="TqkLibrary.FFmpeg.Gpl2.Native.Linux.x64" Version="9.0.2" />
-		<PackageReference Include="TqkLibrary.FFmpeg.Gpl2.Native.Linux.arm64" Version="9.0.2" />
+		<PackageReference Include="TqkLibrary.FFmpeg.Lgpl2.Native.Win.x86" Version="9.0.2" />
+		<PackageReference Include="TqkLibrary.FFmpeg.Lgpl2.Native.Win.x64" Version="9.0.2" />
+		<PackageReference Include="TqkLibrary.FFmpeg.Lgpl2.Native.Win.arm64" Version="9.0.2" />
+		<PackageReference Include="TqkLibrary.FFmpeg.Lgpl2.Native.Linux.x64" Version="9.0.2" />
+		<PackageReference Include="TqkLibrary.FFmpeg.Lgpl2.Native.Linux.arm64" Version="9.0.2" />
 	</ItemGroup>
 
 	<!-- Ship the native wrapper under runtimes/<rid>/native so it is laid out next

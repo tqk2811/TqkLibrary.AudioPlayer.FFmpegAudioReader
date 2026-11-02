@@ -48,7 +48,7 @@ $archMap = @{ 'win-x64' = 'x64'; 'win-x86' = 'Win32'; 'win-arm64' = 'ARM64' }
 
 function Build-NativeWin([string]$rid) {
     $ver = $ffmpegVersions[$rid]
-    $pkg = Join-Path $nugetCache "tqklibrary.ffmpeg.gpl2.native.$($rid.Replace('-','.'))\$ver"
+    $pkg = Join-Path $nugetCache "tqklibrary.ffmpeg.lgpl2.native.$($rid.Replace('-','.'))\$ver"
     if (-not (Test-Path $pkg)) { throw "Package not restored: $pkg" }
     $arch = $rid.Substring(4)   # x64 / x86 / arm64
     $vsArch = $archMap[$rid]

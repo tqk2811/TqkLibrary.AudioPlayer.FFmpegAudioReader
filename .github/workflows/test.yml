@@ -1,6 +1,6 @@
 name: Test
 
-# Build the native wrapper for every RID against the matching TqkLibrary.FFmpeg.Gpl2.Native.<RID>
+# Build the native wrapper for every RID against the matching TqkLibrary.FFmpeg.Lgpl2.Native.<RID>
 # package, then decode the sample mp3 with ConsoleTest on win-x64 and linux-x64.
 # release.yml calls this workflow and packs the native-<rid> artifacts it uploads.
 
@@ -14,7 +14,7 @@ on:
 env:
   NATIVE_SRC: src/TqkLibrary.AudioPlayer.FFmpegAudioReader.Native
   TEST_PROJ: src/ConsoleTest/ConsoleTest.csproj
-  FFMPEG_PKG: TqkLibrary.FFmpeg.Gpl2.Native
+  FFMPEG_PKG: TqkLibrary.FFmpeg.Lgpl2.Native
   FFMPEG_VER: 9.0.2
 
 jobs:

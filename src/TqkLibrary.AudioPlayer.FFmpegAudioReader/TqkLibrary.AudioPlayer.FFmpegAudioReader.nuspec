@@ -12,16 +12,16 @@
 		<readme>docs\README.md</readme>
 		<dependencies>
 			<group targetFramework="net462">
-				<dependency id="TqkLibrary.FFmpeg.Gpl2.Native.Win.x86" version="9.0.2" />
-				<dependency id="TqkLibrary.FFmpeg.Gpl2.Native.Win.x64" version="9.0.2" />
-				<dependency id="TqkLibrary.FFmpeg.Gpl2.Native.Win.arm64" version="9.0.2" />
+				<dependency id="TqkLibrary.FFmpeg.Lgpl2.Native.Win.x86" version="9.0.2" />
+				<dependency id="TqkLibrary.FFmpeg.Lgpl2.Native.Win.x64" version="9.0.2" />
+				<dependency id="TqkLibrary.FFmpeg.Lgpl2.Native.Win.arm64" version="9.0.2" />
 			</group>
 			<group targetFramework="net8.0">
-				<dependency id="TqkLibrary.FFmpeg.Gpl2.Native.Win.x86" version="9.0.2" />
-				<dependency id="TqkLibrary.FFmpeg.Gpl2.Native.Win.x64" version="9.0.2" />
-				<dependency id="TqkLibrary.FFmpeg.Gpl2.Native.Win.arm64" version="9.0.2" />
-				<dependency id="TqkLibrary.FFmpeg.Gpl2.Native.Linux.x64" version="9.0.2" />
-				<dependency id="TqkLibrary.FFmpeg.Gpl2.Native.Linux.arm64" version="9.0.2" />
+				<dependency id="TqkLibrary.FFmpeg.Lgpl2.Native.Win.x86" version="9.0.2" />
+				<dependency id="TqkLibrary.FFmpeg.Lgpl2.Native.Win.x64" version="9.0.2" />
+				<dependency id="TqkLibrary.FFmpeg.Lgpl2.Native.Win.arm64" version="9.0.2" />
+				<dependency id="TqkLibrary.FFmpeg.Lgpl2.Native.Linux.x64" version="9.0.2" />
+				<dependency id="TqkLibrary.FFmpeg.Lgpl2.Native.Linux.arm64" version="9.0.2" />
 			</group>
 		</dependencies>
 	</metadata>
