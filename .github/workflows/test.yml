@@ -1,0 +1,137 @@
+name: Test
+
+# Build the native wrapper for every RID against the matching TqkLibrary.FFmpeg.Gpl2.Native.<RID>
+# package, then decode the sample mp3 with ConsoleTest on win-x64 and linux-x64.
+# release.yml calls this workflow and packs the native-<rid> artifacts it uploads.
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+  workflow_call:
+  workflow_dispatch:
+
+env:
+  NATIVE_SRC: src/TqkLibrary.AudioPlayer.FFmpegAudioReader.Native
+  TEST_PROJ: src/ConsoleTest/ConsoleTest.csproj
+  FFMPEG_PKG: TqkLibrary.FFmpeg.Gpl2.Native
+  FFMPEG_VER: 9.0.2
+
+jobs:
+  native:
+    name: native ${{ matrix.rid }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { rid: win-x64,     os: windows-latest, pkgrid: Win.x64 }
+          - { rid: win-x86,     os: windows-latest, pkgrid: Win.x86 }
+          - { rid: win-arm64,   os: windows-latest, pkgrid: Win.arm64 }
+          - { rid: linux-x64,   os: ubuntu-latest,  pkgrid: Linux.x64 }
+          - { rid: linux-arm64, os: ubuntu-latest,  pkgrid: Linux.arm64 }
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0      # native file version comes from the latest vM.N.P tag
+
+      - name: Native version from tag
+        shell: bash
+        run: |
+          tag=$(git describe --tags --abbrev=0 --match "v[0-9]*.[0-9]*.[0-9]*" 2>/dev/null || echo v0.0.0)
+          IFS=. read -r major minor patch <<< "${tag#v}"
+          echo "VER_ARGS=-DVER_FILE_MAJOR=$major -DVER_FILE_MINOR=$minor -DVER_FILE_BUILD=$patch" >> "$GITHUB_ENV"
+          echo "native file version: $major.$minor.$patch.0"
+
+      - name: Build native (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $rid = "${{ matrix.rid }}"
+          $arch = $rid.Substring(4)                                  # x64 / x86 / arm64
+          $vsArch = @{ 'x64' = 'x64'; 'x86' = 'Win32'; 'arm64' = 'ARM64' }[$arch]
+          Invoke-WebRequest "https://www.nuget.org/api/v2/package/$env:FFMPEG_PKG.${{ matrix.pkgrid }}/$env:FFMPEG_VER" -OutFile pkg.zip
+          Expand-Archive pkg.zip -DestinationPath pkg -Force
+          cmake -A $vsArch `
+            -DFFMPEG_INCLUDE_DIR="pkg/build/native/include" `
+            -DFFMPEG_LIB_DIR="pkg/build/native/win/$arch/lib" `
+            $env:VER_ARGS.Split(' ') `
+            -S "$env:NATIVE_SRC" -B nbuild
+          if ($LASTEXITCODE -ne 0) { exit 1 }
+          cmake --build nbuild --config Release
+          if ($LASTEXITCODE -ne 0) { exit 1 }
+          $dst = "native-out/runtimes/$rid/native"
+          New-Item -ItemType Directory -Force $dst | Out-Null
+          Get-ChildItem nbuild/Release -Filter *.Native.dll | Copy-Item -Destination $dst -Force
+          Get-ChildItem -Recurse $dst
+
+      - name: Build native (Linux)
+        if: runner.os == 'Linux'
+        shell: bash
+        run: |
+          set -euo pipefail
+          RID="${{ matrix.rid }}"
+          ARCH="${RID#linux-}"                                       # x64 / arm64
+          TOOLCHAIN=""
+          if [ "$ARCH" = "arm64" ]; then
+            sudo apt-get update
+            sudo apt-get install -y g++-aarch64-linux-gnu
+            TOOLCHAIN="-DCMAKE_SYSTEM_NAME=Linux -DCMAKE_SYSTEM_PROCESSOR=aarch64 -DCMAKE_CXX_COMPILER=aarch64-linux-gnu-g++"
+          fi
+          curl -sSfL "https://www.nuget.org/api/v2/package/$FFMPEG_PKG.${{ matrix.pkgrid }}/$FFMPEG_VER" -o pkg.zip
+          mkdir pkg && (cd pkg && unzip -q ../pkg.zip)
+          cmake $TOOLCHAIN -DCMAKE_BUILD_TYPE=Release $VER_ARGS \
+            -DFFMPEG_INCLUDE_DIR="pkg/build/native/include" \
+            -DFFMPEG_RUNTIME_DIR="pkg/runtimes/$RID/native" \
+            -S "$NATIVE_SRC" -B nbuild
+          cmake --build nbuild --config Release
+          DST="native-out/runtimes/$RID/native"
+          mkdir -p "$DST"
+          cp nbuild/lib*.Native.so "$DST"/
+          ls -lR "$DST"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: native-${{ matrix.rid }}
+          path: native-out
+          if-no-files-found: error
+
+  smoke:
+    name: decode ${{ matrix.rid }}
+    needs: native
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { rid: win-x64,   os: windows-latest }
+          - { rid: linux-x64, os: ubuntu-latest }
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: |
+            8.0.x
+
+      - name: Download native wrapper (${{ matrix.rid }})
+        uses: actions/download-artifact@v4
+        with:
+          name: native-${{ matrix.rid }}
+          path: src/native-artifacts
+
+      # The test does not need a real version: skip GitVersion.
+      - name: Decode sample mp3
+        shell: bash
+        run: |
+          set -euo pipefail
+          dotnet run --project "$TEST_PROJ" -c Release -p:DisableGitVersionTask=true -p:Version=0.0.0 2>&1 | tee decode.log
+          grep -q "^Exit" decode.log
+
+      - name: Upload decode log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: decode-${{ matrix.rid }}
+          path: decode.log
+          if-no-files-found: ignore
