@@ -15,7 +15,7 @@ env:
 jobs:
   # ---------------------------------------------------------------------------
   # Build the native wrapper for every RID, linking against the matching
-  # TqkLibrary.FFmpeg.Native.<RID> package (headers + import libs / .so).
+  # TqkLibrary.FFmpeg.Gpl2.Native.<RID> package (headers + import libs / .so).
   # ---------------------------------------------------------------------------
   native:
     name: native ${{ matrix.rid }}
@@ -24,11 +24,11 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - { rid: win-x64,     os: windows-latest, pkgid: TqkLibrary.FFmpeg.Native.Win.x64,     ffver: 8.0.1.48 }
-          - { rid: win-x86,     os: windows-latest, pkgid: TqkLibrary.FFmpeg.Native.Win.x86,     ffver: 8.0.1.48 }
-          - { rid: win-arm64,   os: windows-latest, pkgid: TqkLibrary.FFmpeg.Native.Win.arm64,   ffver: 8.0.1.48 }
-          - { rid: linux-x64,   os: ubuntu-latest,  pkgid: TqkLibrary.FFmpeg.Native.Linux.x64,   ffver: 8.0.1.48 }
-          - { rid: linux-arm64, os: ubuntu-latest,  pkgid: TqkLibrary.FFmpeg.Native.Linux.arm64, ffver: 8.0.1.49 }
+          - { rid: win-x64,     os: windows-latest, pkgid: TqkLibrary.FFmpeg.Gpl2.Native.Win.x64,     ffver: 9.0.2 }
+          - { rid: win-x86,     os: windows-latest, pkgid: TqkLibrary.FFmpeg.Gpl2.Native.Win.x86,     ffver: 9.0.2 }
+          - { rid: win-arm64,   os: windows-latest, pkgid: TqkLibrary.FFmpeg.Gpl2.Native.Win.arm64,   ffver: 9.0.2 }
+          - { rid: linux-x64,   os: ubuntu-latest,  pkgid: TqkLibrary.FFmpeg.Gpl2.Native.Linux.x64,   ffver: 9.0.2 }
+          - { rid: linux-arm64, os: ubuntu-latest,  pkgid: TqkLibrary.FFmpeg.Gpl2.Native.Linux.arm64, ffver: 9.0.2 }
     steps:
       - uses: actions/checkout@v4
 

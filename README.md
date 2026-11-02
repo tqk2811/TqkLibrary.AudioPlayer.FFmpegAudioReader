@@ -10,9 +10,12 @@ Cross-platform FFmpeg audio frame reader.
 | Linux | x64, arm64 |
 
 The library targets `net462` (Windows only) and `net8.0` (Windows + Linux).
-FFmpeg 8.0 native libraries are pulled in automatically through the
-`TqkLibrary.FFmpeg.Native.*` packages; the only managed-loaded native module is
+FFmpeg 9.0 native libraries are pulled in automatically through the
+`TqkLibrary.FFmpeg.Gpl2.Native.*` packages; the only managed-loaded native module is
 the thin wrapper `TqkLibrary.AudioPlayer.FFmpegAudioReader.Native`.
+
+> **License note:** the `Gpl2` FFmpeg build is `GPL-2.0-or-later`. Redistributing an
+> application together with these FFmpeg binaries carries the GPL obligations.
 
 ## Usage
 
@@ -30,7 +33,7 @@ while (audioSource.ReadFrame(frame))
 ## Building
 
 The native wrapper is built with CMake against the headers/import-libs shipped
-in the `TqkLibrary.FFmpeg.Native.<RID>` packages.
+in the `TqkLibrary.FFmpeg.Gpl2.Native.<RID>` packages.
 
 - **Local (Windows)**: `pwsh src/Build.ps1` builds the Windows RIDs and packs.
 - **All RIDs (incl. Linux x64/arm64)**: produced by the GitHub Actions

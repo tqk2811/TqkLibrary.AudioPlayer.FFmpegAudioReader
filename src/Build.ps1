@@ -6,9 +6,9 @@ Set-Location $root
 # FFmpeg native package versions (one NuGet package per RID).
 # ---------------------------------------------------------------------------
 $ffmpegVersions = @{
-    'win-x64'   = '8.0.1.48'
-    'win-x86'   = '8.0.1.48'
-    'win-arm64' = '8.0.1.48'
+    'win-x64'   = '9.0.2'
+    'win-x86'   = '9.0.2'
+    'win-arm64' = '9.0.2'
 }
 $nugetCache = Join-Path $env:USERPROFILE '.nuget\packages'
 
@@ -16,7 +16,7 @@ $nugetCache = Join-Path $env:USERPROFILE '.nuget\packages'
 $vswhere = Join-Path ${env:ProgramFiles(x86)} 'Microsoft Visual Studio\Installer\vswhere.exe'
 $cmake = $null
 if (Test-Path $vswhere) {
-    $vs = & $vswhere -latest -products * -property installationPath | Select-Object -First 1
+    $vs = & $vswhere -latest -products * -requires Microsoft.VisualStudio.Component.VC.CMake.Project -property installationPath | Select-Object -First 1
     $candidate = Join-Path $vs 'Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\bin\cmake.exe'
     if (Test-Path $candidate) { $cmake = $candidate }
 }
@@ -30,8 +30,8 @@ if (-not (Get-Command dotnet-gitversion -ErrorAction SilentlyContinue)) {
     $env:PATH = "$env:PATH;$env:USERPROFILE\.dotnet\tools"
 }
 $gv = dotnet-gitversion /output json | ConvertFrom-Json
-$verMajor = [int]$gv.Major; $verMinor = [int]$gv.Minor; $verBuild = [int]$gv.CommitsSinceVersionSource
-Write-Host "Version: $verMajor.$verMinor.$verBuild"
+$verMajor = [int]$gv.Major; $verMinor = [int]$gv.Minor; $verBuild = [int]$gv.Patch
+Write-Host "Version: $($gv.FullSemVer) (native file version $verMajor.$verMinor.$verBuild.0)"
 
 $libProj = "$root\TqkLibrary.AudioPlayer.FFmpegAudioReader\TqkLibrary.AudioPlayer.FFmpegAudioReader.csproj"
 $nativeSrc = "$root\TqkLibrary.AudioPlayer.FFmpegAudioReader.Native"
@@ -48,7 +48,7 @@ $archMap = @{ 'win-x64' = 'x64'; 'win-x86' = 'Win32'; 'win-arm64' = 'ARM64' }
 
 function Build-NativeWin([string]$rid) {
     $ver = $ffmpegVersions[$rid]
-    $pkg = Join-Path $nugetCache "tqklibrary.ffmpeg.native.$($rid.Replace('-','.'))\$ver"
+    $pkg = Join-Path $nugetCache "tqklibrary.ffmpeg.gpl2.native.$($rid.Replace('-','.'))\$ver"
     if (-not (Test-Path $pkg)) { throw "Package not restored: $pkg" }
     $arch = $rid.Substring(4)   # x64 / x86 / arm64
     $vsArch = $archMap[$rid]
@@ -87,7 +87,3 @@ Write-Host "Packed: $($nupkg.Name)"
 Write-Warning "This local package only contains the RIDs built on this machine. The published cross-platform package (incl. Linux x64/arm64) is produced by the GitHub Actions workflow."
 
 if (![string]::IsNullOrWhiteSpace($env:localNuget)) { Copy-Item $nupkg.FullName -Destination $env:localNuget -Force }
-if (![string]::IsNullOrWhiteSpace($env:nugetKey)) {
-    Write-Host "Enter to push nuget"; pause; Write-Host "enter to confirm"; pause
-    nuget push $nupkg.FullName -ApiKey $env:nugetKey -Source https://api.nuget.org/v3/index.json
-}
